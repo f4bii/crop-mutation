@@ -7,9 +7,9 @@ import { BASE_CROPS, EXTRA_CONDITIONS, CROP_EMOJIS } from "@/data/constants"
 import { allMutations } from "@/lib/mutation-data"
 import { MutationIcon } from "@/components/icons/MutationIcon"
 import { CropIcon } from "@/components/icons/CropIcon"
+import { useDesignerDrag } from "@/hooks/useDesignerDrag"
 import type { CustomDesignGrid, CustomDesignCell } from "@types"
 
-// Effect constants (reused from crop-drops.tsx)
 const EFFECT_MULTIPLIERS = {
     improved_harvest_boost: 0.30,
     harvest_boost: 0.20,
@@ -33,7 +33,6 @@ interface CustomDesignerProps {
     unlockedSlots: boolean[][]
 }
 
-// Group mutations by tier
 function getMutationsByTier(): Record<number, typeof allMutations> {
     const grouped: Record<number, typeof allMutations> = {}
     for (const mutation of allMutations) {
@@ -44,12 +43,10 @@ function getMutationsByTier(): Record<number, typeof allMutations> {
     return grouped
 }
 
-// Calculate Chebyshev distance
 function getCellDistance(r1: number, c1: number, r2: number, c2: number): number {
     return Math.max(Math.abs(r1 - r2), Math.abs(c1 - c2))
 }
 
-// Calculate effects at a cell from placed mutations
 function calculateCellEffects(
     row: number,
     col: number,
@@ -62,7 +59,10 @@ function calculateCellEffects(
         sources: [],
     }
 
-    // Find all mutations in the grid
+    const appliedEffects = new Set<string>()
+
+    const mutationsInRange: Array<{ mutationId: string; effects: string[]; distance: number }> = []
+
     for (let r = 0; r < 10; r++) {
         for (let c = 0; c < 10; c++) {
             const cell = grid[r][c]
@@ -71,7 +71,6 @@ function calculateCellEffects(
             const mutationData = MUTATIONS_DATA[cell.mutationId]
             if (!mutationData) continue
 
-            // Calculate spread radius
             let spreadRadius: 1 | 2 | 3 = EFFECT_SPREAD_RADIUS.none
             if (mutationData.effects.includes('improved_effect_spread')) {
                 spreadRadius = EFFECT_SPREAD_RADIUS.improved_effect_spread
@@ -82,49 +81,45 @@ function calculateCellEffects(
             const distance = getCellDistance(row, col, r, c)
 
             if (distance <= spreadRadius) {
-                // First check for immunity
-                if (mutationData.effects.includes('immunity')) {
-                    effects.hasImmunity = true
-                    effects.sources.push({ mutationId: cell.mutationId, effect: 'immunity', value: 0 })
-                }
+                mutationsInRange.push({
+                    mutationId: cell.mutationId,
+                    effects: mutationData.effects,
+                    distance
+                })
             }
         }
     }
 
-    // Second pass: apply harvest effects
-    for (let r = 0; r < 10; r++) {
-        for (let c = 0; c < 10; c++) {
-            const cell = grid[r][c]
-            if (cell.type !== 'mutation' || !cell.mutationId) continue
+    mutationsInRange.sort((a, b) => a.distance - b.distance)
 
-            const mutationData = MUTATIONS_DATA[cell.mutationId]
-            if (!mutationData) continue
+    for (const { mutationId, effects: mutEffects } of mutationsInRange) {
+        if (mutEffects.includes('immunity') && !appliedEffects.has('immunity')) {
+            effects.hasImmunity = true
+            effects.sources.push({ mutationId, effect: 'immunity', value: 0 })
+            appliedEffects.add('immunity')
+        }
+    }
 
-            let spreadRadius: 1 | 2 | 3 = EFFECT_SPREAD_RADIUS.none
-            if (mutationData.effects.includes('improved_effect_spread')) {
-                spreadRadius = EFFECT_SPREAD_RADIUS.improved_effect_spread
-            } else if (mutationData.effects.includes('effect_spread')) {
-                spreadRadius = EFFECT_SPREAD_RADIUS.effect_spread
-            }
+    for (const { mutationId, effects: mutEffects } of mutationsInRange) {
+        for (const effect of mutEffects) {
+            if (appliedEffects.has(effect)) continue
 
-            const distance = getCellDistance(row, col, r, c)
-
-            if (distance <= spreadRadius) {
-                for (const effect of mutationData.effects) {
-                    if (effect === 'improved_harvest_boost') {
-                        effects.multiplier += EFFECT_MULTIPLIERS.improved_harvest_boost
-                        effects.sources.push({ mutationId: cell.mutationId, effect, value: EFFECT_MULTIPLIERS.improved_harvest_boost })
-                    } else if (effect === 'harvest_boost') {
-                        effects.multiplier += EFFECT_MULTIPLIERS.harvest_boost
-                        effects.sources.push({ mutationId: cell.mutationId, effect, value: EFFECT_MULTIPLIERS.harvest_boost })
-                    } else if (effect === 'harvest_loss' && !effects.hasImmunity) {
-                        effects.multiplier += EFFECT_MULTIPLIERS.harvest_loss
-                        effects.sources.push({ mutationId: cell.mutationId, effect, value: EFFECT_MULTIPLIERS.harvest_loss })
-                    } else if (effect === 'bonus_drops') {
-                        effects.hasBonusDrops = true
-                        effects.sources.push({ mutationId: cell.mutationId, effect, value: 0 })
-                    }
-                }
+            if (effect === 'improved_harvest_boost') {
+                effects.multiplier += EFFECT_MULTIPLIERS.improved_harvest_boost
+                effects.sources.push({ mutationId, effect, value: EFFECT_MULTIPLIERS.improved_harvest_boost })
+                appliedEffects.add(effect)
+            } else if (effect === 'harvest_boost') {
+                effects.multiplier += EFFECT_MULTIPLIERS.harvest_boost
+                effects.sources.push({ mutationId, effect, value: EFFECT_MULTIPLIERS.harvest_boost })
+                appliedEffects.add(effect)
+            } else if (effect === 'harvest_loss' && !effects.hasImmunity) {
+                effects.multiplier += EFFECT_MULTIPLIERS.harvest_loss
+                effects.sources.push({ mutationId, effect, value: EFFECT_MULTIPLIERS.harvest_loss })
+                appliedEffects.add(effect)
+            } else if (effect === 'bonus_drops') {
+                effects.hasBonusDrops = true
+                effects.sources.push({ mutationId, effect, value: 0 })
+                appliedEffects.add(effect)
             }
         }
     }
@@ -133,7 +128,6 @@ function calculateCellEffects(
     return effects
 }
 
-// Get mutation effect radius for hover
 function getMutationEffectRadius(mutationId: string): number {
     const mutationData = MUTATIONS_DATA[mutationId]
     if (!mutationData) return 1
@@ -146,7 +140,6 @@ function getMutationEffectRadius(mutationId: string): number {
     return EFFECT_SPREAD_RADIUS.none
 }
 
-// Create empty grid
 function createEmptyGrid(unlockedSlots: boolean[][]): CustomDesignGrid {
     const grid: CustomDesignGrid = []
     for (let row = 0; row < 10; row++) {
@@ -168,10 +161,11 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
     const [showEffects, setShowEffects] = useState(true)
     const [paletteTab, setPaletteTab] = useState<'mutations' | 'crops'>('mutations')
 
+    const { handleCellMouseDown, handleCellMouseEnter } = useDesignerDrag(grid, setGrid, selectedItem)
+
     const mutationsByTier = useMemo(() => getMutationsByTier(), [])
     const tierNumbers = useMemo(() => Object.keys(mutationsByTier).map(Number).sort((a, b) => a - b), [mutationsByTier])
 
-    // Check if cell is in effect range of hovered mutation
     const isInHoveredRange = useCallback((row: number, col: number): boolean => {
         if (!hoveredCell) return false
         const hoveredCellData = grid[hoveredCell.row]?.[hoveredCell.col]
@@ -182,31 +176,6 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
         return distance <= radius && distance > 0
     }, [hoveredCell, grid])
 
-    // Handle cell click
-    const handleCellClick = useCallback((row: number, col: number) => {
-        const cell = grid[row][col]
-
-        // Can't interact with locked cells
-        if (cell.type === 'locked') return
-
-        // If something is selected, try to place it
-        if (selectedItem) {
-            // If clicking on an occupied cell, don't place (user should delete first)
-            if (cell.type !== 'empty') return
-
-            setGrid(prev => {
-                const newGrid = prev.map(r => r.map(c => ({ ...c })))
-                if (selectedItem.type === 'mutation') {
-                    newGrid[row][col] = { type: 'mutation', mutationId: selectedItem.id }
-                } else {
-                    newGrid[row][col] = { type: 'crop', cropType: selectedItem.id }
-                }
-                return newGrid
-            })
-        }
-    }, [selectedItem, grid])
-
-    // Handle cell right-click (delete)
     const handleCellRightClick = useCallback((e: React.MouseEvent, row: number, col: number) => {
         e.preventDefault()
         const cell = grid[row][col]
@@ -220,12 +189,10 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
         })
     }, [grid])
 
-    // Clear the entire grid
     const clearGrid = useCallback(() => {
         setGrid(createEmptyGrid(unlockedSlots))
     }, [unlockedSlots])
 
-    // Count placed items
     const placedCounts = useMemo(() => {
         let mutations = 0
         let crops = 0
@@ -238,7 +205,6 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
         return { mutations, crops, total: mutations + crops }
     }, [grid])
 
-    // Get multiplier color
     const getMultiplierColor = (multiplier: number) => {
         if (multiplier >= 1.5) return 'text-green-400'
         if (multiplier >= 1.2) return 'text-emerald-400'
@@ -257,9 +223,7 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
 
     return (
         <div className="flex gap-6 h-full">
-            {/* Left Sidebar - Palette */}
             <div className="w-80 flex-shrink-0 space-y-4">
-                {/* Palette Header */}
                 <div className="bg-card border border-border rounded-xl p-4">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -275,7 +239,6 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                         </button>
                     </div>
 
-                    {/* Tab switcher */}
                     <div className="flex gap-2 mb-4">
                         <button
                             onClick={() => setPaletteTab('mutations')}
@@ -299,7 +262,6 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                         </button>
                     </div>
 
-                    {/* Selected item indicator */}
                     {selectedItem && (
                         <div className="mb-4 p-3 bg-accent/20 border border-accent rounded-lg">
                             <div className="text-xs text-muted-foreground mb-1">Selected:</div>
@@ -334,7 +296,6 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                         </div>
                     )}
 
-                    {/* Stats */}
                     <div className="grid grid-cols-2 gap-2 text-center text-sm">
                         <div className="p-2 bg-muted rounded-lg">
                             <div className="text-foreground font-bold">{placedCounts.mutations}</div>
@@ -347,7 +308,6 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                     </div>
                 </div>
 
-                {/* Item List */}
                 <div className="bg-card border border-border rounded-xl p-4 max-h-[500px] overflow-y-auto">
                     {paletteTab === 'mutations' ? (
                         <div className="space-y-4">
@@ -442,7 +402,6 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                     )}
                 </div>
 
-                {/* Instructions */}
                 <div className="bg-card border border-border rounded-xl p-4">
                     <h4 className="font-bold text-sm text-foreground mb-2 flex items-center gap-2">
                         <MousePointer2 className="h-4 w-4" />
@@ -450,16 +409,14 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                     </h4>
                     <ul className="text-xs text-muted-foreground space-y-1">
                         <li>1. Select an item from the palette</li>
-                        <li>2. Click on grid to place</li>
-                        <li>3. Right-click to remove</li>
+                        <li>2. Click or drag to place items</li>
+                        <li>3. Click/drag occupied cells to remove</li>
                         <li>4. Hover mutations to see effect range</li>
                     </ul>
                 </div>
             </div>
 
-            {/* Right Side - Grid & Validation */}
             <div className="flex-1 space-y-4">
-                {/* Grid Header */}
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                         <Sparkles className="h-5 w-5" />
@@ -476,7 +433,6 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                     </label>
                 </div>
 
-                {/* Grid */}
                 <div className="flex justify-center">
                     <div className="inline-grid grid-cols-10 gap-1 p-4 bg-card border border-border rounded-xl">
                         {grid.map((row, rowIndex) =>
@@ -490,12 +446,15 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                                 return (
                                     <div
                                         key={`${rowIndex}-${colIndex}`}
-                                        onClick={() => handleCellClick(rowIndex, colIndex)}
-                                        onContextMenu={(e) => handleCellRightClick(e, rowIndex, colIndex)}
-                                        onMouseEnter={() => setHoveredCell({ row: rowIndex, col: colIndex })}
+                                        onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
+                                        onMouseEnter={() => {
+                                            setHoveredCell({ row: rowIndex, col: colIndex })
+                                            handleCellMouseEnter(rowIndex, colIndex)
+                                        }}
                                         onMouseLeave={() => setHoveredCell(null)}
+                                        onContextMenu={(e) => handleCellRightClick(e, rowIndex, colIndex)}
                                         className={`
-                                            w-12 h-12 rounded-lg border-2 flex flex-col items-center justify-center transition-all relative cursor-pointer
+                                            w-12 h-12 rounded-lg border-2 flex flex-col items-center justify-center transition-all relative cursor-pointer select-none
                                             ${cell.type === 'locked' ? 'bg-muted/50 border-border/50 cursor-not-allowed' : ''}
                                             ${cell.type === 'empty' ? 'bg-card border-border hover:border-accent/50' : ''}
                                             ${cell.type === 'mutation' ? ('bg-accent/20 border-accent') : ''}
@@ -509,7 +468,7 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                                                 ? `${MUTATIONS_DATA[cell.mutationId]?.name || cell.mutationId}`
                                                 : cell.type === 'crop' && cell.cropType
                                                     ? `${cell.cropType}${effects ? `\nMultiplier: ${(effects.multiplier * 100).toFixed(0)}%` : ''}`
-                                                    : isUnlocked ? 'Click to place' : 'Locked'
+                                                    : isUnlocked ? 'Click/drag to place' : 'Locked'
                                         }
                                     >
                                         {cell.type === 'mutation' && cell.mutationId && (
@@ -545,7 +504,6 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                     </div>
                 </div>
 
-                {/* Effect Legend */}
                 <div className="bg-card border border-border rounded-xl p-4">
                     <h4 className="font-bold text-sm text-foreground mb-3 flex items-center gap-2">
                         <Info className="h-4 w-4" />
@@ -553,27 +511,27 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                     </h4>
                     <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs">
                         <div className="flex items-center justify-between">
-                            <span className="text-green-400">improved_harvest_boost</span>
+                            <span className="text-green-400">Improved harvest boost</span>
                             <span className="text-green-400">+30%</span>
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-emerald-400">harvest_boost</span>
+                            <span className="text-emerald-400">Harvest boost</span>
                             <span className="text-emerald-400">+20%</span>
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-red-400">harvest_loss</span>
+                            <span className="text-red-400">Harvest loss</span>
                             <span className="text-red-400">-20%</span>
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-yellow-400">immunity</span>
+                            <span className="text-yellow-400">Immunity</span>
                             <span className="text-yellow-400">blocks negative</span>
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-blue-400">effect_spread</span>
+                            <span className="text-blue-400">Effect spread</span>
                             <span className="text-blue-400">range +1</span>
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-purple-400">improved_effect_spread</span>
+                            <span className="text-purple-400">Improved effect spread</span>
                             <span className="text-purple-400">range +2</span>
                         </div>
                     </div>
