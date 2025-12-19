@@ -91,7 +91,6 @@ export function UnlockedMutations({ unlockedMutations, setUnlockedMutations }: U
                         <MutationIcon
                           mutationId={mutation.id}
                           mutationName={mutation.name}
-                          fallbackIcon={mutation.icon}
                           size="medium"
                         />
                       </div>
