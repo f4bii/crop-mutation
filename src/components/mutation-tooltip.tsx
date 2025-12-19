@@ -22,7 +22,6 @@ export function MutationTooltip({ mutation, children }: MutationTooltipProps) {
             <MutationIcon
               mutationId={mutation.id}
               mutationName={mutation.name}
-              fallbackIcon={mutation.icon}
               size="medium"
             />
             <div className="flex-1 min-w-0">
@@ -54,7 +53,6 @@ export function MutationTooltip({ mutation, children }: MutationTooltipProps) {
                           <MutationIcon
                             mutationId={mutationData.id}
                             mutationName={mutationData.name}
-                            fallbackIcon={mutationData.icon}
                             size="small"
                           />
                         ) : (

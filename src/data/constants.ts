@@ -1,4 +1,4 @@
-import type {BaseCrop, ExtraCondition, GroundColors, CropEmojis, CropGroundRequirements, TierColor} from '@types';
+import type {BaseCrop, ExtraCondition, CropEmojis, CropGroundRequirements, TierColor} from '@types';
 
 export const BASE_CROPS: BaseCrop[] = [
     'wheat', 'potato', 'carrot', 'pumpkin', 'melon', 'cocoa_beans', 'sugar_cane',
@@ -6,15 +6,6 @@ export const BASE_CROPS: BaseCrop[] = [
 ];
 
 export const EXTRA_CONDITIONS: ExtraCondition[] = ['fire', 'dead_plant', 'fermento'];
-
-export const GROUND_COLORS: GroundColors = {
-    'farmland': {bg: 'bg-amber-800', border: 'border-amber-600', text: '🌾'},
-    'soul_sand': {bg: 'bg-amber-950', border: 'border-amber-800', text: '💀'},
-    'mycelium': {bg: 'bg-purple-900', border: 'border-purple-700', text: '🍄'},
-    'sand': {bg: 'bg-yellow-300', border: 'border-yellow-500', text: '🏜️'},
-    'end_stone': {bg: 'bg-yellow-100', border: 'border-yellow-300', text: '🌌'},
-    'any': {bg: 'bg-slate-700', border: 'border-slate-600', text: '❓'}
-};
 
 export const CROP_EMOJIS: CropEmojis = {
     'wheat': '🌾',

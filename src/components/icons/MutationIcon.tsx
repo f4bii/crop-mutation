@@ -47,7 +47,6 @@ try {
 export function MutationIcon({
     mutationId,
     mutationName,
-    fallbackIcon = '❓',
     size = 'medium',
     className = ''
 }: MutationIconProps) {
@@ -76,19 +75,7 @@ export function MutationIcon({
         )
     }
 
-    // Fallback to emoji
-    const emojiSize = {
-        small: 'text-2xl',
-        medium: 'text-4xl',
-        large: 'text-5xl',
-        xl: 'text-6xl',
-    }
-
-    return (
-        <span className={`${emojiSize[size]} ${className}`} role="img" aria-label={mutationName}>
-            {fallbackIcon}
-        </span>
-    )
+    throw new Error("No mutation webp image found.")
 }
 
 // Utility to check if a mutation has an image

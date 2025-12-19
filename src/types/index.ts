@@ -9,14 +9,12 @@ export type Crop = BaseCrop | ExtraCondition;
 
 export type GroundType = 'farmland' | 'soul_sand' | 'mycelium' | 'sand' | 'end_stone' | 'any';
 
-// Mutation conditions can be crops, special conditions, or mutation IDs
 export interface MutationConditions {
   special?: string;
   adjacent_crops?: number;
   [key: string]: number | string | undefined;
 }
 
-// Mutation data structure
 export interface MutationData {
   name: string;
   size: string;
@@ -26,35 +24,20 @@ export interface MutationData {
   conditions: MutationConditions;
 }
 
-// Record of all mutations
 export type MutationsData = Record<string, MutationData>;
 
-// Mutation tiers
 export type MutationTiers = Record<string, number>;
 
-// Ground colors
-export interface GroundColor {
-  bg: string;
-  border: string;
-  text: string;
-}
-
-export type GroundColors = Record<GroundType, GroundColor> & { [key: string]: GroundColor };
-
-// Crop emojis
 export type CropEmojis = Record<Crop, string> & { [key: string]: string };
 
-// Crop ground requirements
 export type CropGroundRequirements = Record<Crop, GroundType> & { [key: string]: GroundType };
 
-// Tier colors
 export interface TierColor {
   bg: string;
   border: string;
   glow: string;
 }
 
-// Grid cell types
 export interface MutationAreaCell {
   type: 'mutation_area';
   mutationId: string;
@@ -78,7 +61,6 @@ export type GridCell = MutationAreaCell | CropCell | EmptyZoneCell | null;
 
 export type Grid = GridCell[][];
 
-// Layout optimization types
 export interface PlacedMutation {
   id: string;
   name: string;
@@ -108,13 +90,16 @@ export interface OptimizedLayout {
   unlockedSlots: Set<string>;
 }
 
-// Grouped mutations by tier
 export interface GroupedMutationsByTier {
   [tier: number]: Array<MutationData & { id: string }>;
 }
 
-// Target mutations map
-export type TargetMutations = Map<string, number>;
-
-// Available mutations
 export type AvailableMutations = Record<string, MutationData>;
+
+export interface CustomDesignCell {
+  type: 'empty' | 'locked' | 'mutation' | 'crop';
+  mutationId?: string;
+  cropType?: string;
+}
+
+export type CustomDesignGrid = CustomDesignCell[][];

@@ -44,17 +44,5 @@ export const MUTATIONS_DATA: MutationsData = {
 };
 
 export const getMutationData = (id: string): MutationData => {
-    if (id === 'godseed') {
-        return {
-            name: "Godseed",
-            size: "3x3",
-            ground: "farmland",
-            drops: null,
-            effects: [
-                "improved_harvest_boost", "improved_water_retain", "improved_xp_boost", "immunity", "bonus_drops", "improved_effect_spread"
-            ],
-            conditions: { special: "all_positive_crop_effects" },
-        }
-    }
     return MUTATIONS_DATA[id];
 }

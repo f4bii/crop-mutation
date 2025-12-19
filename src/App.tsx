@@ -2,13 +2,10 @@ import {useState} from "react"
 import {Sprout} from "lucide-react"
 import {GridSetup} from "@components/grid-setup"
 import {UnlockedMutations} from "@components/unlocked-mutations"
-import {TargetMutations} from "@components/target-mutations"
-import {LayoutView} from "@components/layout-view"
-import {CropDrops} from "@components/crop-drops"
 import {getDefaultUnlockedSlots} from "@data/constants"
-import type {OptimizedLayout} from "@types";
+import {CustomDesigner} from "@components/custom-designer.tsx";
 
-type StepType = 1 | 2 | 3 | 4 | 5
+type StepType = "grid" | "unlocked" | "designer"
 
 const getDefaultGrid = (): boolean[][] => {
     const grid = Array(10)
@@ -23,25 +20,18 @@ const getDefaultGrid = (): boolean[][] => {
 }
 
 export default function CropMutationLab() {
-    const [currentStep, setCurrentStep] = useState<StepType>(1)
+    const [currentStep, setCurrentStep] = useState<StepType>("grid")
 
     const [unlockedSlots, setUnlockedSlots] = useState<boolean[][]>(getDefaultGrid)
 
     const [unlockedMutations, setUnlockedMutations] = useState<string[]>([])
 
-    const [targetMutations, setTargetMutations] = useState<{ id: string; count: number }[]>([])
-
-    const [layout, setLayout] = useState<OptimizedLayout | null>(null)
-
     const unlockedCount = unlockedSlots.flat().filter(Boolean).length
-    const targetCount = targetMutations.reduce((sum, t) => sum + t.count, 0)
 
     const steps = [
-        {number: 1, title: "Grid Setup"},
-        {number: 2, title: "Unlocked"},
-        {number: 3, title: "Targets"},
-        {number: 4, title: "Layout"},
-        {number: 5, title: "Crop Drops"},
+        {number: "grid", title: "Grid Setup"},
+        {number: "unlocked", title: "Unlocked"},
+        {number: "designer", title: "Designer"},
     ]
 
     return (
@@ -69,12 +59,6 @@ export default function CropMutationLab() {
                                 <div className="w-2 h-2 rounded-full bg-primary"></div>
                                 <span className="text-muted-foreground">
                   <span className="font-bold text-foreground">{unlockedMutations.length}</span> unlocked
-                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-chart-3"></div>
-                                <span className="text-muted-foreground">
-                  <span className="font-bold text-foreground">{targetCount}</span> targets
                 </span>
                             </div>
                         </div>
@@ -105,21 +89,15 @@ export default function CropMutationLab() {
             </header>
 
             <main className="mx-auto max-w-7xl px-6 py-8">
-                {currentStep === 1 && <GridSetup unlockedSlots={unlockedSlots} setUnlockedSlots={setUnlockedSlots}
+                {currentStep === "grid" && <GridSetup unlockedSlots={unlockedSlots} setUnlockedSlots={setUnlockedSlots}
                                                  resetSlots={() => setUnlockedSlots(getDefaultGrid)}/>}
-                {currentStep === 2 && (
+                {currentStep === "unlocked" && (
                     <UnlockedMutations unlockedMutations={unlockedMutations}
                                        setUnlockedMutations={setUnlockedMutations}/>
                 )}
-                {currentStep === 3 && (
-                    <TargetMutations
-                        unlockedMutations={unlockedMutations}
-                        targetMutations={targetMutations}
-                        setTargetMutations={setTargetMutations}
-                    />
+                {currentStep === "designer" && (
+                    <CustomDesigner unlockedSlots={unlockedSlots}/>
                 )}
-                {currentStep === 4 && <LayoutView unlockedSlots={unlockedSlots} targetMutations={targetMutations} layout={layout} setLayout={setLayout} />}
-                {currentStep === 5 && <CropDrops unlockedSlots={unlockedSlots} />}
             </main>
         </div>
     )
