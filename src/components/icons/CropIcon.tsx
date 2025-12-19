@@ -1,4 +1,5 @@
 import type { BaseCrop } from '@types'
+import {CROP_EMOJIS} from "@data/constants.ts";
 
 interface CropIconProps {
     crop: BaseCrop | string
@@ -68,7 +69,18 @@ export function CropIcon({ crop, size = 'medium', className = '' }: CropIconProp
         )
     }
 
-    throw new Error('Crop webp image not found.')
+    const emoji = CROP_EMOJIS[crop as BaseCrop] || '🌱'
+    const emojiSize = {
+        small: 'text-sm',
+        medium: 'text-lg',
+        large: 'text-2xl',
+    }
+
+    return (
+        <span className={`${emojiSize[size]} ${className}`} role="img" aria-label={crop}>
+            {emoji}
+        </span>
+    )
 }
 
 // Utility to check if a crop has an image
