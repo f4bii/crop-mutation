@@ -8,12 +8,7 @@ export const BASE_CROPS: BaseCrop[] = [
 export const EXTRA_CONDITIONS: ExtraCondition[] = ['fire', 'dead_plant', 'fermento'];
 
 export const CROP_EMOJIS: CropEmojis = {
-    'wheat': '🌾',
-    'potato': '🥔',
-    'carrot': '🥕', 'pumpkin': '🎃', 'melon': '🍈',
-    'cocoa_beans': '🫘', 'sugar_cane': '🎋', 'cactus': '🌵', 'nether_wart': '🔴',
-    'red_mushroom': '🍄', 'brown_mushroom': '🟤', 'fire': '🔥', 'dead_plant': '🥀',
-    'moonflower': '🌙', 'sunflower': '🌻', 'wild_rose': '🌹', 'fermento': '🧪'
+    'fire': '🔥', 'dead_plant': '🥀', 'fermento': '🧪'
 };
 
 export const CROP_GROUND_REQUIREMENTS: CropGroundRequirements = {

@@ -1,9 +1,7 @@
-"use client"
-
 import { useState, useMemo, useCallback } from "react"
 import { Palette, Trash2, Sparkles, Info, MousePointer2 } from "lucide-react"
 import { MUTATIONS_DATA } from "@/data/mutationsData"
-import { BASE_CROPS, EXTRA_CONDITIONS, CROP_EMOJIS } from "@/data/constants"
+import {BASE_CROPS, CROP_EMOJIS, EXTRA_CONDITIONS} from "@/data/constants"
 import { allMutations } from "@/lib/mutation-data"
 import { MutationIcon } from "@/components/icons/MutationIcon"
 import { CropIcon } from "@/components/icons/CropIcon"
@@ -271,7 +269,6 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                                         <MutationIcon
                                             mutationId={selectedItem.id}
                                             mutationName={MUTATIONS_DATA[selectedItem.id]?.name || selectedItem.id}
-                                            fallbackIcon="🌱"
                                             size="small"
                                         />
                                         <span className="font-medium text-foreground">
@@ -476,7 +473,6 @@ export function CustomDesigner({ unlockedSlots }: CustomDesignerProps) {
                                                 <MutationIcon
                                                     mutationId={cell.mutationId}
                                                     mutationName={MUTATIONS_DATA[cell.mutationId]?.name || cell.mutationId}
-                                                    fallbackIcon="🌱"
                                                     size="small"
                                                 />
                                             </>

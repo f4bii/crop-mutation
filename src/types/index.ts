@@ -28,7 +28,7 @@ export type MutationsData = Record<string, MutationData>;
 
 export type MutationTiers = Record<string, number>;
 
-export type CropEmojis = Record<Crop, string> & { [key: string]: string };
+export type CropEmojis = Record<ExtraCondition, string> & { [key: string]: string };
 
 export type CropGroundRequirements = Record<Crop, GroundType> & { [key: string]: GroundType };
 

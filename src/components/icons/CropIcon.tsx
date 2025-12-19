@@ -1,4 +1,3 @@
-import { CROP_EMOJIS } from '@/data/constants'
 import type { BaseCrop } from '@types'
 
 interface CropIconProps {
@@ -41,7 +40,7 @@ try {
         }
     })
 } catch (error) {
-    console.warn('No crop webp images found. Using emoji fallback.')
+    console.warn('No crop webp images found.')
 }
 
 export function CropIcon({ crop, size = 'medium', className = '' }: CropIconProps) {
@@ -69,19 +68,7 @@ export function CropIcon({ crop, size = 'medium', className = '' }: CropIconProp
         )
     }
 
-    // Fallback to emoji
-    const emoji = CROP_EMOJIS[crop as BaseCrop] || '🌱'
-    const emojiSize = {
-        small: 'text-sm',
-        medium: 'text-lg',
-        large: 'text-2xl',
-    }
-
-    return (
-        <span className={`${emojiSize[size]} ${className}`} role="img" aria-label={crop}>
-            {emoji}
-        </span>
-    )
+    throw new Error('Crop webp image not found.')
 }
 
 // Utility to check if a crop has an image

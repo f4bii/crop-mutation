@@ -1,7 +1,6 @@
 interface MutationIconProps {
     mutationId: string
     mutationName: string
-    fallbackIcon?: string
     size?: 'small' | 'medium' | 'large' | 'xl'
     className?: string
 }
@@ -41,7 +40,7 @@ try {
         }
     })
 } catch (error) {
-    console.warn('No mutation webp images found. Using emoji fallback.')
+    console.warn('No mutation webp images found.')
 }
 
 export function MutationIcon({
