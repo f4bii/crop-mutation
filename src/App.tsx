@@ -1,11 +1,7 @@
 import {useState} from "react"
 import {Sprout} from "lucide-react"
-import {GridSetup} from "@components/grid-setup"
-import {UnlockedMutations} from "@components/unlocked-mutations"
 import {getDefaultUnlockedSlots} from "@data/constants"
 import {CustomDesigner} from "@components/custom-designer.tsx";
-
-type StepType = "grid" | "unlocked" | "designer"
 
 const getDefaultGrid = (): boolean[][] => {
     const grid = Array(10)
@@ -19,85 +15,73 @@ const getDefaultGrid = (): boolean[][] => {
     return grid
 }
 
+// Parse design URL and get slots that need to be unlocked
+const getInitialUnlockedSlots = (): boolean[][] => {
+    const grid = getDefaultGrid()
+
+    try {
+        const params = new URLSearchParams(window.location.search)
+        const design = params.get('design')
+        if (design) {
+            const data = JSON.parse(atob(design)) as Array<[number, number, string, string?]>
+            for (const [row, col] of data) {
+                if (row >= 0 && row < 10 && col >= 0 && col < 10) {
+                    grid[row][col] = true
+                }
+            }
+        }
+    } catch {
+        // Invalid design param, use default
+        console.log("Error in getInitialUnlockedSlots")
+    }
+
+    return grid
+}
+
 export default function CropMutationLab() {
-    const [currentStep, setCurrentStep] = useState<StepType>("grid")
-
-    const [unlockedSlots, setUnlockedSlots] = useState<boolean[][]>(getDefaultGrid)
-
+    const [unlockedSlots, setUnlockedSlots] = useState<boolean[][]>(getInitialUnlockedSlots)
     const [unlockedMutations, setUnlockedMutations] = useState<string[]>([])
 
     const unlockedCount = unlockedSlots.flat().filter(Boolean).length
 
-    const steps = [
-        {number: "grid", title: "Grid Setup"},
-        {number: "unlocked", title: "Unlocked"},
-        {number: "designer", title: "Designer"},
-    ]
-
     return (
         <div className="min-h-screen bg-background">
             <header className="bg-card border-b border-border">
-                <div className="mx-auto max-w-7xl px-6 py-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                                <Sprout className="w-5 h-5 text-primary-foreground"/>
+                <div className="mx-auto px-3 sm:px-6 py-3">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-primary rounded-lg flex items-center justify-center">
+                                <Sprout className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground"/>
                             </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-foreground">Crop Mutation Lab</h1>
-                            </div>
+                            <h1 className="text-base sm:text-xl font-bold text-foreground">Crop Mutation Lab</h1>
                         </div>
 
-                        <div className="flex items-center gap-6 text-sm">
-                            <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                            <div className="flex items-center gap-1 sm:gap-2">
                                 <div className="w-2 h-2 rounded-full bg-accent"></div>
                                 <span className="text-muted-foreground">
-                  <span className="font-bold text-foreground">{unlockedCount}</span> slots
-                </span>
+                                    <span className="font-bold text-foreground">{unlockedCount}</span> <span className="hidden sm:inline">slots</span>
+                                </span>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 sm:gap-2">
                                 <div className="w-2 h-2 rounded-full bg-primary"></div>
                                 <span className="text-muted-foreground">
-                  <span className="font-bold text-foreground">{unlockedMutations.length}</span> unlocked
-                </span>
+                                    <span className="font-bold text-foreground">{unlockedMutations.length}</span> <span className="hidden sm:inline">mutations</span>
+                                </span>
                             </div>
                         </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                        {steps.map((step) => {
-                            const isActive = currentStep === step.number
-                            return (
-                                <button
-                                    key={step.number}
-                                    onClick={() => setCurrentStep(step.number as StepType)}
-                                    className={`
-                    px-6 py-2 rounded-lg transition-all font-medium text-sm
-                    ${
-                                        isActive
-                                            ? "bg-primary text-primary-foreground"
-                                            : "bg-card text-foreground hover:bg-muted border border-border"
-                                    }
-                  `}
-                                >
-                                    {step.title}
-                                </button>
-                            )
-                        })}
                     </div>
                 </div>
             </header>
 
-            <main className="mx-auto max-w-7xl px-6 py-8">
-                {currentStep === "grid" && <GridSetup unlockedSlots={unlockedSlots} setUnlockedSlots={setUnlockedSlots}
-                                                 resetSlots={() => setUnlockedSlots(getDefaultGrid)}/>}
-                {currentStep === "unlocked" && (
-                    <UnlockedMutations unlockedMutations={unlockedMutations}
-                                       setUnlockedMutations={setUnlockedMutations}/>
-                )}
-                {currentStep === "designer" && (
-                    <CustomDesigner unlockedSlots={unlockedSlots}/>
-                )}
+            <main className="px-2 sm:px-4 py-3 sm:py-4">
+                <CustomDesigner
+                    unlockedSlots={unlockedSlots}
+                    setUnlockedSlots={setUnlockedSlots}
+                    resetSlots={() => setUnlockedSlots(getDefaultGrid)}
+                    unlockedMutations={unlockedMutations}
+                    setUnlockedMutations={setUnlockedMutations}
+                />
             </main>
         </div>
     )

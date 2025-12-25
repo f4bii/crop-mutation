@@ -103,3 +103,75 @@ export interface CustomDesignCell {
 }
 
 export type CustomDesignGrid = CustomDesignCell[][];
+
+// ============================================
+// Optimizer Types
+// ============================================
+
+export type ObjectiveType = 'MAX_MUTATIONS' | 'MAX_PROFIT';
+
+export type MoveType = 'ADD_MUTATION' | 'REMOVE_MUTATION' | 'MOVE_MUTATION' | 'SWAP_MUTATION';
+
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface FootprintOffset {
+  dx: number;
+  dy: number;
+}
+
+export interface MutationGeometry {
+  width: number;
+  height: number;
+  footprint: FootprintOffset[];
+  adjacencyRing: FootprintOffset[];
+}
+
+export interface OptimizerPlacedMutation {
+  id: string;
+  mutationId: string;
+  position: Position;
+  geometry: MutationGeometry;
+  satisfyingCrops: Map<string, Position[]>;
+  satisfyingMutations: Map<string, string[]>;
+}
+
+export interface OptimizerPlacedCrop {
+  id: string;
+  crop: string;
+  position: Position;
+  forMutations: string[];
+}
+
+export interface OptimizerState {
+  grid: (string | null)[][];
+  placedMutations: Map<string, OptimizerPlacedMutation>;
+  placedCrops: Map<string, OptimizerPlacedCrop>;
+  score: number;
+}
+
+export interface OptimizerConfig {
+  maxIterations: number;
+  startTemperature: number;
+  coolingRate: number;
+  objectiveType: ObjectiveType;
+}
+
+export interface OptimizerResult {
+  state: OptimizerState;
+  iterations: number;
+  finalScore: number;
+  bestScore: number;
+  history: { iteration: number; score: number; temperature: number }[];
+}
+
+export interface OptimizerProgress {
+  iteration: number;
+  maxIterations: number;
+  currentScore: number;
+  bestScore: number;
+  temperature: number;
+  placedMutationsCount: number;
+}

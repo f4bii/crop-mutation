@@ -73,8 +73,7 @@ export function MutationIcon({
             />
         )
     }
-
-    throw new Error("No mutation webp image found.")
+    return (<></>)
 }
 
 // Utility to check if a mutation has an image
